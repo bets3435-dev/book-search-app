@@ -82,3 +82,42 @@ book-search-app/
 
 **만든이**: AI Assistant  
 **제작일**: 2024년 
+
+## 🗃️ 대용량 CSV 연동 (백엔드 API)
+
+수십만 건 데이터는 브라우저에서 직접 처리하기 어렵습니다. FastAPI + SQLite로 검색 API를 제공하고, 프런트엔드는 API를 호출합니다.
+
+### 1) 가상환경 및 패키지 설치
+```bash
+cd book-search-app
+python -m venv venv
+venv\Scripts\activate
+pip install -r api/requirements.txt
+```
+
+### 2) CSV → SQLite 적재
+```bash
+# 기본 헤더명 가정: title, author, publisher, category, publish_date, description
+python api/ingest_csv.py --csv "C:\\path\\to\\your_books.csv"
+
+# 헤더명이 다르면 컬럼 매핑 지정 예시
+python api/ingest_csv.py --csv "C:\\data\\books.csv" --title Title --author Author \
+  --publisher Publisher --category Category --publish_date Published --description Description
+```
+
+### 3) API 서버 실행
+```bash
+uvicorn api.app:app --host 0.0.0.0 --port 8000
+```
+- 헬스체크: http://localhost:8000/health
+- 검색 API: http://localhost:8000/search?q=검색어&category=소설&sort=title&page=1&size=20
+
+### 4) 프런트엔드 연동
+- `script.js` 의 `API_BASE` 는 기본값 `http://localhost:8000` 입니다.
+- GitHub Pages에서 접속 시에도 로컬/배포된 API로 호출됩니다(CORS 허용).
+
+### 5) 배포 옵션
+- 간단: Render / Railway / Fly.io 등에 FastAPI 배포 후 `API_BASE` 를 해당 URL로 변경
+- 고성능: Typesense/MeiliSearch 등의 검색엔진 사용 → API에서 프록시
+
+--- 

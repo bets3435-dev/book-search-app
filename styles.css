@@ -233,6 +233,38 @@ body {
     opacity: 0.8;
 }
 
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.page-btn {
+    padding: 10px 16px;
+    border: 2px solid #e1e5e9;
+    background: white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-btn:hover:enabled {
+    border-color: #667eea;
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.2);
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #666;
+    font-weight: 500;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .container {
