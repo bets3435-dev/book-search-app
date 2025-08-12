@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도서 검색 시스템</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-book-open"></i> 도서 검색 시스템</h1>
+            <p>원하는 도서를 쉽고 빠르게 찾아보세요</p>
+        </header>
+
+        <main class="main-content">
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="도서 제목, 저자, 출판사를 입력하세요..." />
+                    <button id="searchBtn" class="search-btn">
+                        <i class="fas fa-search"></i> 검색
+                    </button>
+                </div>
+                
+                <div class="filter-options">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">전체 카테고리</option>
+                        <option value="소설">소설</option>
+                        <option value="자기계발">자기계발</option>
+                        <option value="경제경영">경제경영</option>
+                        <option value="역사">역사</option>
+                        <option value="과학">과학</option>
+                        <option value="예술">예술</option>
+                        <option value="여행">여행</option>
+                        <option value="요리">요리</option>
+                    </select>
+                    
+                    <select id="sortFilter" class="filter-select">
+                        <option value="relevance">관련도순</option>
+                        <option value="title">제목순</option>
+                        <option value="author">저자순</option>
+                        <option value="date">출판일순</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div id="resultsCount" class="results-count"></div>
+                <div id="bookResults" class="book-results"></div>
+                <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> 검색 중...
+                </div>
+                <div id="noResults" class="no-results" style="display: none;">
+                    <i class="fas fa-search"></i>
+                    <p>검색 결과가 없습니다.</p>
+                    <p>다른 키워드로 다시 검색해보세요.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 도서 검색 시스템. 모든 권리 보유.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
