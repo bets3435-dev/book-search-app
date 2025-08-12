@@ -1,4 +1,4 @@
-// 샘플 도서 데이터
+// 샘플 도서 데이터 (폴백용)
 const sampleBooks = [
     {
         id: 1,
@@ -92,6 +92,12 @@ const sampleBooks = [
     }
 ];
 
+// API 설정과 상태
+const API_BASE = 'https://book-search-app-ol4f.onrender.com';
+let currentPage = 1;
+const pageSize = 20;
+let lastTotal = 0;
+
 // DOM 요소들
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
@@ -101,39 +107,75 @@ const bookResults = document.getElementById('bookResults');
 const resultsCount = document.getElementById('resultsCount');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const noResults = document.getElementById('noResults');
+const paginationEl = document.getElementById('pagination');
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
+const pageInfoEl = document.getElementById('pageInfo');
 
-// 검색 기능
-function searchBooks() {
-    const searchTerm = searchInput.value.trim().toLowerCase();
+// 검색 실행
+async function searchBooks(page = 1) {
+    const searchTerm = searchInput.value.trim();
     const selectedCategory = categoryFilter.value;
     const selectedSort = sortFilter.value;
-    
-    // 로딩 표시
+
+    currentPage = page;
     showLoading();
-    
-    // 검색 지연 시뮬레이션 (실제 API 호출 시에는 제거)
-    setTimeout(() => {
+
+    try {
+        // API 호출
+        const url = new URL(`${API_BASE}/search`);
+        if (searchTerm) url.searchParams.set('q', searchTerm);
+        if (selectedCategory) url.searchParams.set('category', selectedCategory);
+        if (selectedSort) url.searchParams.set('sort', selectedSort);
+        url.searchParams.set('page', String(currentPage));
+        url.searchParams.set('size', String(pageSize));
+
+        const resp = await fetch(url.toString());
+        if (!resp.ok) throw new Error('API 오류');
+        const data = await resp.json();
+
+        lastTotal = data.total || 0;
+        displayResults((data.items || []).map(normalizeBook), lastTotal);
+        updatePagination();
+    } catch (e) {
+        // 폴백: 클라이언트 사이드 검색
         let filteredBooks = sampleBooks.filter(book => {
-            const matchesSearch = !searchTerm || 
-                book.title.toLowerCase().includes(searchTerm) ||
-                book.author.toLowerCase().includes(searchTerm) ||
-                book.publisher.toLowerCase().includes(searchTerm) ||
-                book.description.toLowerCase().includes(searchTerm);
-            
+            const s = (searchTerm || '').toLowerCase();
+            const matchesSearch = !s ||
+                book.title.toLowerCase().includes(s) ||
+                book.author.toLowerCase().includes(s) ||
+                book.publisher.toLowerCase().includes(s) ||
+                book.description.toLowerCase().includes(s);
             const matchesCategory = !selectedCategory || book.category === selectedCategory;
-            
             return matchesSearch && matchesCategory;
         });
-        
-        // 정렬
         filteredBooks = sortBooks(filteredBooks, selectedSort);
-        
-        // 결과 표시
-        displayResults(filteredBooks);
-    }, 500);
+        lastTotal = filteredBooks.length;
+        const start = (currentPage - 1) * pageSize;
+        const pageItems = filteredBooks.slice(start, start + pageSize);
+        displayResults(pageItems.map(normalizeBook), lastTotal);
+        updatePagination();
+    }
 }
 
-// 도서 정렬
+function updatePagination() {
+    const totalPages = Math.max(1, Math.ceil(lastTotal / pageSize));
+    paginationEl.style.display = lastTotal > pageSize ? 'flex' : 'none';
+    pageInfoEl.textContent = `${currentPage} / ${totalPages}`;
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = currentPage >= totalPages;
+}
+
+prevPageBtn?.addEventListener('click', () => {
+    if (currentPage > 1) searchBooks(currentPage - 1);
+});
+
+nextPageBtn?.addEventListener('click', () => {
+    const totalPages = Math.max(1, Math.ceil(lastTotal / pageSize));
+    if (currentPage < totalPages) searchBooks(currentPage + 1);
+});
+
+// 정렬
 function sortBooks(books, sortType) {
     switch(sortType) {
         case 'title':
@@ -142,36 +184,45 @@ function sortBooks(books, sortType) {
             return books.sort((a, b) => a.author.localeCompare(b.author, 'ko'));
         case 'date':
             return books.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
-        default: // relevance
+        default:
             return books;
     }
 }
 
-// 검색 결과 표시
-function displayResults(books) {
+// 결과 표시
+function displayResults(books, total = 0) {
     hideLoading();
-    
-    if (books.length === 0) {
+
+    if (!books || books.length === 0) {
         showNoResults();
         return;
     }
-    
-    // 결과 개수 표시
-    resultsCount.textContent = `검색 결과: ${books.length}건`;
+
+    resultsCount.textContent = `검색 결과: ${total}건`;
     resultsCount.style.display = 'block';
-    
-    // 도서 카드 생성
-    const bookCards = books.map(book => createBookCard(book)).join('');
+
+    const bookCards = books.map(createBookCard).join('');
     bookResults.innerHTML = bookCards;
     bookResults.style.display = 'grid';
-    
-    // 도서 카드 클릭 이벤트
+
     addBookCardEvents();
 }
 
-// 도서 카드 생성
+// 데이터 표준화
+function normalizeBook(book) {
+    return {
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        publisher: book.publisher,
+        category: book.category,
+        publishDate: book.publishDate || book.publish_date,
+        description: book.description || '',
+    };
+}
+
+// 카드 컴포넌트
 function createBookCard(book) {
-    const firstLetter = book.title.charAt(0);
     return `
         <div class="book-card" data-book-id="${book.id}">
             <div class="book-cover">
@@ -179,29 +230,29 @@ function createBookCard(book) {
             </div>
             <div class="book-info">
                 <h3>${book.title}</h3>
-                <div class="author">저자: ${book.author}</div>
-                <div class="publisher">출판사: ${book.publisher}</div>
-                <div class="category">${book.category}</div>
+                <div class="author">저자: ${book.author || '-'}</div>
+                <div class="publisher">출판사: ${book.publisher || '-'}</div>
+                <div class="category">${book.category || '분류없음'}</div>
             </div>
         </div>
     `;
 }
 
-// 도서 카드 클릭 이벤트
+// 카드 클릭 → 모달 표시
 function addBookCardEvents() {
     const bookCards = document.querySelectorAll('.book-card');
     bookCards.forEach(card => {
         card.addEventListener('click', () => {
-            const bookId = card.getAttribute('data-book-id');
-            const book = sampleBooks.find(b => b.id == bookId);
-            if (book) {
-                showBookDetail(book);
-            }
+            const title = card.querySelector('h3')?.textContent || '';
+            const author = (card.querySelector('.author')?.textContent || '').replace('저자: ', '');
+            const publisher = (card.querySelector('.publisher')?.textContent || '').replace('출판사: ', '');
+            const category = card.querySelector('.category')?.textContent || '';
+            showBookDetail({ id: '', title, author, publisher, category, publishDate: '', description: '' });
         });
     });
 }
 
-// 도서 상세 정보 표시
+// 상세 모달
 function showBookDetail(book) {
     const detailHTML = `
         <div class="book-detail-overlay">
@@ -217,50 +268,39 @@ function showBookDetail(book) {
                         <i class="fas fa-book"></i>
                     </div>
                     <div class="book-detail-info">
-                        <p><strong>저자:</strong> ${book.author}</p>
-                        <p><strong>출판사:</strong> ${book.publisher}</p>
-                        <p><strong>카테고리:</strong> ${book.category}</p>
-                        <p><strong>출판일:</strong> ${formatDate(book.publishDate)}</p>
-                        <p><strong>설명:</strong> ${book.description}</p>
+                        <p><strong>저자:</strong> ${book.author || '-'}</p>
+                        <p><strong>출판사:</strong> ${book.publisher || '-'}</p>
+                        <p><strong>카테고리:</strong> ${book.category || '-'}</p>
+                        <p><strong>출판일:</strong> ${book.publishDate ? formatDate(book.publishDate) : '-'}</p>
+                        <p><strong>설명:</strong> ${book.description || '설명 없음'}</p>
                     </div>
                 </div>
             </div>
         </div>
     `;
-    
-    // 기존 모달 제거
+
     const existingModal = document.querySelector('.book-detail-overlay');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // 새 모달 추가
+    if (existingModal) existingModal.remove();
     document.body.insertAdjacentHTML('beforeend', detailHTML);
-    
-    // 모달 외부 클릭 시 닫기
+
     const overlay = document.querySelector('.book-detail-overlay');
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            closeBookDetail();
-        }
+        if (e.target === overlay) closeBookDetail();
     });
 }
 
-// 도서 상세 정보 닫기
 function closeBookDetail() {
     const modal = document.querySelector('.book-detail-overlay');
-    if (modal) {
-        modal.remove();
-    }
+    if (modal) modal.remove();
 }
 
-// 날짜 포맷팅
+// 유틸리티
 function formatDate(dateString) {
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('ko-KR');
 }
 
-// 로딩 표시
 function showLoading() {
     loadingSpinner.style.display = 'block';
     bookResults.style.display = 'none';
@@ -268,35 +308,29 @@ function showLoading() {
     noResults.style.display = 'none';
 }
 
-// 로딩 숨기기
 function hideLoading() {
     loadingSpinner.style.display = 'none';
 }
 
-// 검색 결과 없음 표시
 function showNoResults() {
     resultsCount.style.display = 'none';
     bookResults.style.display = 'none';
     noResults.style.display = 'block';
 }
 
-// 이벤트 리스너 등록
-searchBtn.addEventListener('click', searchBooks);
+// 초기화
+searchBtn.addEventListener('click', () => searchBooks(1));
 searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        searchBooks();
-    }
+    if (e.key === 'Enter') searchBooks(1);
 });
+categoryFilter.addEventListener('change', () => searchBooks(1));
+sortFilter.addEventListener('change', () => searchBooks(1));
 
-categoryFilter.addEventListener('change', searchBooks);
-sortFilter.addEventListener('change', searchBooks);
-
-// 페이지 로드 시 초기 검색 결과 표시
 document.addEventListener('DOMContentLoaded', () => {
-    searchBooks();
+    searchBooks(1);
 });
 
-// 모달 스타일 추가
+// 모달용 인라인 스타일 삽입
 const modalStyles = `
     <style>
         .book-detail-overlay {
@@ -311,7 +345,6 @@ const modalStyles = `
             justify-content: center;
             z-index: 1000;
         }
-        
         .book-detail-modal {
             background: white;
             border-radius: 20px;
@@ -321,7 +354,6 @@ const modalStyles = `
             overflow-y: auto;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
-        
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -329,12 +361,7 @@ const modalStyles = `
             padding: 20px 25px;
             border-bottom: 1px solid #e1e5e9;
         }
-        
-        .modal-header h2 {
-            margin: 0;
-            color: #333;
-        }
-        
+        .modal-content { padding: 25px; }
         .close-btn {
             background: none;
             border: none;
@@ -345,16 +372,7 @@ const modalStyles = `
             border-radius: 50%;
             transition: all 0.3s ease;
         }
-        
-        .close-btn:hover {
-            background: #f0f0f0;
-            color: #333;
-        }
-        
-        .modal-content {
-            padding: 25px;
-        }
-        
+        .close-btn:hover { background: #f0f0f0; color: #333; }
         .book-cover-large {
             width: 100%;
             height: 250px;
@@ -367,17 +385,9 @@ const modalStyles = `
             color: white;
             font-size: 4rem;
         }
-        
-        .book-detail-info p {
-            margin-bottom: 12px;
-            line-height: 1.6;
-        }
-        
-        .book-detail-info strong {
-            color: #333;
-            margin-right: 8px;
-        }
+        .book-detail-info p { margin-bottom: 12px; line-height: 1.6; }
+        .book-detail-info strong { color: #333; margin-right: 8px; }
     </style>
 `;
 
-document.head.insertAdjacentHTML('beforeend', modalStyles); 
+document.head.insertAdjacentHTML('beforeend', modalStyles);
