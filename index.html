@@ -26,15 +26,17 @@
                 
                 <div class="filter-options">
                     <select id="categoryFilter" class="filter-select">
-                        <option value="">전체 카테고리</option>
-                        <option value="소설">소설</option>
-                        <option value="자기계발">자기계발</option>
-                        <option value="경제경영">경제경영</option>
-                        <option value="역사">역사</option>
-                        <option value="과학">과학</option>
-                        <option value="예술">예술</option>
-                        <option value="여행">여행</option>
-                        <option value="요리">요리</option>
+                        <option value="">전체 분류</option>
+                        <option value="0">총류</option>
+                        <option value="1">철학</option>
+                        <option value="2">종교</option>
+                        <option value="3">사회과학</option>
+                        <option value="4">자연과학</option>
+                        <option value="5">기술과학</option>
+                        <option value="6">예술</option>
+                        <option value="7">언어</option>
+                        <option value="8">문학</option>
+                        <option value="9">역사</option>
                     </select>
                     
                     <select id="sortFilter" class="filter-select">
@@ -48,7 +50,18 @@
 
             <div class="results-section">
                 <div id="resultsCount" class="results-count"></div>
-                <div id="bookResults" class="book-results"></div>
+                
+                <div class="table-container">
+                    <!-- table 태그에 ID를 추가했습니다. -->
+                    <table id="bookResultsTable">
+                        <thead>
+                            <!-- JavaScript가 이 부분을 동적으로 채웁니다. -->
+                            <tr></tr>
+                        </thead>
+                        <tbody id="bookResults"></tbody>
+                    </table>
+                </div>
+
                 <div id="loadingSpinner" class="loading-spinner" style="display: none;">
                     <i class="fas fa-spinner fa-spin"></i> 검색 중...
                 </div>
@@ -76,4 +89,4 @@
 
     <script src="script.js"></script>
 </body>
-</html> 
+</html>

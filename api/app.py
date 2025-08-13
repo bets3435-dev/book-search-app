@@ -34,6 +34,12 @@ def search(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
 ):
+        # category 필터링 로직 수정
+    if category:
+        # category = ? 대신 LIKE ? 와 %를 사용하여 '해당 숫자로 시작하는' 모든 데이터를 찾습니다.
+        base_query += " AND category LIKE ?"
+        params.append(f'{category}%')
+    
     conn = get_connection()
     try:
         where_clauses = ["1=1"]
