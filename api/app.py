@@ -85,4 +85,4 @@ def search(
             "items": rows,
         }
     finally:
-        conn.close() 
+        conn.close()

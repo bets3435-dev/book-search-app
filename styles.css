@@ -151,9 +151,14 @@ body {
 .book-cover {
     width: 100%;
     height: 200px;
+    margin-bottom: 15px;
+}
+
+.book-cover-fallback {
+    width: 100%;
+    height: 200px;
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     border-radius: 10px;
-    margin-bottom: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -226,13 +231,6 @@ body {
     color: #888;
 }
 
-.footer {
-    text-align: center;
-    margin-top: 40px;
-    color: white;
-    opacity: 0.8;
-}
-
 .pagination {
     display: flex;
     align-items: center;
@@ -263,6 +261,24 @@ body {
 .page-info {
     color: #666;
     font-weight: 500;
+}
+
+.search-type-badge {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    color: white;
+    opacity: 0.8;
 }
 
 /* 반응형 디자인 */

@@ -92,22 +92,22 @@ book-search-app/
 cd book-search-app
 python -m venv venv
 venv\Scripts\activate
-pip install -r api/requirements.txt
+pip install -r api\requirements.txt
 ```
 
 ### 2) CSV → SQLite 적재
 ```bash
 # 기본 헤더명 가정: title, author, publisher, category, publish_date, description
-python api/ingest_csv.py --csv "C:\\path\\to\\your_books.csv"
+python api\ingest_csv.py --csv "C:\\path\\to\\your_books.csv"
 
 # 헤더명이 다르면 컬럼 매핑 지정 예시
-python api/ingest_csv.py --csv "C:\\data\\books.csv" --title Title --author Author \
+python api\ingest_csv.py --csv "C:\\data\\books.csv" --title Title --author Author \
   --publisher Publisher --category Category --publish_date Published --description Description
 ```
 
 ### 3) API 서버 실행
 ```bash
-uvicorn api.app:app --host 0.0.0.0 --port 8000
+uvicorn api.app_simple:app --host 0.0.0.0 --port 8000
 ```
 - 헬스체크: http://localhost:8000/health
 - 검색 API: http://localhost:8000/search?q=검색어&category=소설&sort=title&page=1&size=20
@@ -119,5 +119,32 @@ uvicorn api.app:app --host 0.0.0.0 --port 8000
 ### 5) 배포 옵션
 - 간단: Render / Railway / Fly.io 등에 FastAPI 배포 후 `API_BASE` 를 해당 URL로 변경
 - 고성능: Typesense/MeiliSearch 등의 검색엔진 사용 → API에서 프록시
+
+## 🛒 YES24 도서 정보 연동
+
+### 주요 기능
+- **실시간 도서 정보**: YES24에서 최신 가격, 표지 이미지, 재고 정보
+- **하이브리드 검색**: 로컬 DB + YES24 정보 병합
+- **표지 이미지**: 고화질 도서 표지 이미지 표시
+- **가격 정보**: 실시간 가격 및 할인 정보
+- **ISBN 연동**: ISBN으로 정확한 도서 정보 매칭
+
+### API 엔드포인트
+- `GET /search`: 통합 검색 (로컬 DB + YES24)
+- `GET /yes24/search`: YES24 전용 검색
+- `GET /yes24/book/{isbn}`: ISBN으로 도서 상세 정보
+- `GET /yes24/bestsellers`: 베스트셀러 목록
+
+### 사용법
+1. **통합 검색**: 일반 검색 시 자동으로 YES24 정보 연동
+2. **YES24 전용**: `use_yes24=true` 파라미터로 YES24만 검색
+3. **표지 이미지**: 검색 결과에 자동으로 표지 이미지 표시
+4. **가격 정보**: 실시간 가격 및 구매 링크 제공
+
+### 기술적 특징
+- **웹 스크래핑**: 공식 API 없이 YES24 웹사이트에서 정보 추출
+- **에러 처리**: YES24 서버 장애 시 로컬 DB로 폴백
+- **캐싱**: 중복 요청 방지 및 성능 최적화
+- **유사도 매칭**: 제목과 저자 기반으로 도서 정보 매칭
 
 --- 
